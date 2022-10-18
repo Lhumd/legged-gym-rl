@@ -30,56 +30,74 @@
 
 from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobotCfgPPO
 
-class A1RoughCfg( LeggedRobotCfg ):
+class SoloRoughCfg( LeggedRobotCfg ):
     class init_state( LeggedRobotCfg.init_state ):
-        pos = [0.0, 0.0, 0.42] # x,y,z [m]
+        pos = [0.0, 0.0, 0.4] # x,y,z [m]
         default_joint_angles = { # = target angles [rad] when action = 0.0
-            'FL_hip_joint': 0.1,   # [rad]
-            'RL_hip_joint': 0.1,   # [rad]
-            'FR_hip_joint': -0.1 ,  # [rad]
-            'RR_hip_joint': -0.1,   # [rad]
+            'FL_HAA': 0.0,   # [rad]
+            'HL_HAA': 0.0,   # [rad]
+            'FR_HAA': 0.0 ,  # [rad]
+            'HR_HAA': 0.0,   # [rad]
 
-            'FL_thigh_joint': 0.8,     # [rad]
-            'RL_thigh_joint': 1.,   # [rad]
-            'FR_thigh_joint': 0.8,     # [rad]
-            'RR_thigh_joint': 1.,   # [rad]
+            'FL_HFE': 0.8,     # [rad]
+            'HL_HFE': -0.8,   # [rad]
+            'FR_HFE': 0.8,     # [rad]
+            'HR_HFE': -0.8,   # [rad]
 
-            'FL_calf_joint': -1.5,   # [rad]
-            'RL_calf_joint': -1.5,    # [rad]
-            'FR_calf_joint': -1.5,  # [rad]
-            'RR_calf_joint': -1.5,    # [rad]
+            'FL_KFE': -1.6,   # [rad]
+            'HL_KFE': 1.6,    # [rad]
+            'FR_KFE': -1.6,  # [rad]
+            'HR_KFE': 1.6,    # [rad]
         }
 
     class control( LeggedRobotCfg.control ):
         # PD Drive parameters:
-        control_type = 'P'
-        stiffness = {'joint': 20.}  # [N*m/rad]
-        damping = {'joint': 0.5}     # [N*m*s/rad]
+        stiffness = {'HAA': 2., 'HFE': 2., 'KFE': 2.}  # [N*m/rad]
+        damping = {'HAA': 0.05, 'HFE': 0.05, 'KFE': 0.05}     # [N*m*s/rad]
         # action scale: target angle = actionScale * action + defaultAngle
         action_scale = 0.25
         # decimation: Number of control action updates @ sim DT per policy DT
         decimation = 4
 
     class asset( LeggedRobotCfg.asset ):
-        file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/a1/urdf/a1.urdf'
-        name = "a1"
-        foot_name = "foot"
+        file = '{LEGGED_GYM_ROOT_DIR}/resources/robots/solo/urdf/solo12.urdf'
+        name = "solo"
+        foot_name = "FOOT"
         penalize_contacts_on = ["thigh", "calf"]
-        terminate_after_contacts_on = ["base"]
+        terminate_after_contacts_on = ["base_link"]
         self_collisions = 1 # 1 to disable, 0 to enable...bitwise filter
-  
+
     class rewards( LeggedRobotCfg.rewards ):
         soft_dof_pos_limit = 0.9
-        base_height_target = 0.25
-        class scales( LeggedRobotCfg.rewards.scales ):
+        base_height_target = 0.35
+
+        class scales(LeggedRobotCfg.rewards.scales):
             torques = -0.0002
             dof_pos_limits = -10.0
+            lin_vel_z = -10.0
+            ang_vel_xy = -0.00
 
-class A1RoughCfgPPO( LeggedRobotCfgPPO ):
+    class env( LeggedRobotCfg.env ):
+        num_observations = 48
+    class terrain( LeggedRobotCfg.terrain ):
+        mesh_type = 'plane'
+        measure_heights = False
+
+
+    # class commands( LeggedRobotCfg.commands ):
+    #     heading_command = False
+    #     resampling_time = 4.
+    #     class ranges( LeggedRobotCfg.commands.ranges ):
+    #         ang_vel_yaw = [-1.5, 1.5]
+    #
+    # class domain_rand( LeggedRobotCfg.domain_rand ):
+    #     friction_range = [0., 1.5] # on ground planes the friction combination mode is averaging, i.e total friction = (foot_friction + 1.)/2.
+
+class SoloRoughCfgPPO( LeggedRobotCfgPPO ):
     class algorithm( LeggedRobotCfgPPO.algorithm ):
         entropy_coef = 0.01
     class runner( LeggedRobotCfgPPO.runner ):
         run_name = ''
-        experiment_name = 'rough_a1'
+        experiment_name = 'solo'
 
   
